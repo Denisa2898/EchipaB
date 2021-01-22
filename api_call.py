@@ -1,7 +1,5 @@
 import veryfi
-import pprint
-import re
-import prettytable
+
 
 ##https://hub.veryfi.com/signup/verifydemo/
 

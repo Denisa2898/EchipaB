@@ -318,11 +318,76 @@ class Window:
                             wr = csv.writer(myfile)
                             wr.writerows(result)
                         with open(file_to_write_to, "r") as myfile:
-                            self.results.configure(text=myfile.read())
+                            # self.results.configure(text=myfile.read())
+                            self.saved.configure(
+                                text="Un fisier .csv  cu datele facturii tale a fost salvat in " + file_to_write_to,
+                                font="Arial")
+                            text = myfile.read()
+                            self.buton.config(command=lambda: self.openNewWindow(text))
+                            self.buton.place(relx=0.5, rely=0.6, anchor='center')
  #################################################################################
                     else:
-                        resultJson = procesare(self.entry.get())
-                        print(resultJson)
+
+                        # Model factura generala - Extrage CUI pentru furnizor si client , daca exista, si totalul facturii
+                        f1 = procesare(self.entry.get())
+                        pprint.pprint(f1)
+
+                        print("------------------------------------------")
+
+                        print(f1['ocr_text'])
+
+                        CUI = re.findall('[A-Z]{2}\w[0-9]{6,10}', f1['ocr_text'])
+                        if (len(CUI) > 0):
+                            CUI_furnizor = CUI[0]
+                        else:
+                            CUI_furnizor = "Nu este specificat"
+                        print(CUI_furnizor)
+                        if (len(CUI) > 1):
+                            CUI_client = CUI[1]
+                        else:
+                            CUI_client = "Persoana fizica"
+                        print(CUI_client)
+
+                        TOTAL_factura = re.findall('[0-9]*\.[0-9]+', f1['ocr_text'])
+                        print(TOTAL_factura)
+
+                        v = []
+                        for i in TOTAL_factura:
+                            i = float(i)
+                            v.append(i)
+                        print(max(v))
+
+                        from prettytable import PrettyTable
+                        Denumire = ['CUI_Furnizor', 'CUI_Client ', 'Total_factura']
+                        Valoare = [CUI_furnizor, CUI_client, max(v)]
+                        tabel = PrettyTable(['Denumire', 'Valoare'])
+                        for i in range(0, 3):
+                            tabel.add_row([Denumire[i], Valoare[i]])
+                        print(tabel)
+
+                        inv_prod_re = re.compile('\d{1,13}.?\s[A-Z].*')
+                        furnizor_client = tabel.get_string()
+                        result = [tuple(filter(None, map(str.strip, splitline))) for line in
+                                  furnizor_client.splitlines() for splitline in [line.split("|")] if len(splitline) > 1]
+                        with open(file_to_write_to, 'w', newline='') as myfile:
+                            wr = csv.writer(myfile)
+                            wr.writerows(result)
+                            wr.writerows(' ')
+                            for line in f1["ocr_text"].split('\n'):
+                                if inv_prod_re.match(line):
+                                    result1 = [tuple(filter(None, map(str.strip, splitline))) for l in line.splitlines()
+                                               for splitline
+                                               in [l.split("\t")] if len(splitline) > 1]
+                                    print(result1)
+                                    wr.writerows(result1)
+                        with open(file_to_write_to, "r") as myfile:
+                            # self.results.configure(text=myfile.read())
+                            self.saved.configure(
+                                text="Un fisier .csv  cu datele facturii tale a fost salvat in " + file_to_write_to,
+                                font="Arial")
+                            text = myfile.read()
+                            self.buton.config(command=lambda: self.openNewWindow(text))
+                            self.buton.place(relx=0.5, rely=0.6, anchor='center')
                         
 
 root = Tk()
